@@ -1,0 +1,5 @@
+bin_objs
+a.out
+*.o
+ft_nmap
+.vscode
