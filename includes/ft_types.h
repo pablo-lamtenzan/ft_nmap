@@ -2,6 +2,7 @@
 # pragma once
 
 # include <inttypes.h>
+# include <stdbool.h>
 
 typedef int8_t		i8;
 typedef int16_t		i16;
@@ -15,54 +16,68 @@ typedef uint64_t	u64;
 
 typedef enum	parse_opts
 {
-	O_HELP		= ((u64)1 << 0),		/* '--help' */
-	O_PORT		= (O_HELP << 1),		/* '--ports' */
-	O_IP		= (O_PORT << 1),		/* '--ip' */
-	O_FILE		= (O_IP << 1),			/* '--file' */
-	O_SPEEDUP	= (O_FILE << 1),		/* '--speedup' */
-	O_S_TCPSYN	= (O_SPEEDUP << 1),		/* '-sS' : TCP SYN Scan */
+	O_HELP		= ((u64)1UL << 0),			/* '--help' */
+	O_PORT		= ((u64)O_HELP << 1),		/* '--ports' */
+	O_IP		= ((u64)O_PORT << 1),		/* '--ip' */
+	O_FILE		= ((u64)O_IP << 1),			/* '--file' */
+	O_SPEEDUP	= ((u64)O_FILE << 1),		/* '--speedup' */
 
-	O_S_TCPCON	= (O_S_TCPSYN << 1),	/* '-sT' : TCP CONNECT Scan */
-	O_S_TCPACK	= (O_S_TCPCON << 1),	/* '-sA' : TCP ACK Scan */
-	O_S_TCPWIN	= (O_S_TCPACK << 1),	/* '-sW' : TCP WINDOW Scan */
-	O_S_TCPMAI	= (O_S_TCPWIN << 1),	/* '-sM' : TCP MAIMON Scan */
-	O_S_UDP		= (O_S_TCPMAI << 1),	/* '-sU' : UDP Scan */
-	O_S_TCPNUL	= (O_S_UDP << 1),		/* '-sN' : TCP NULL Scan */
-	O_S_TCPFIN	= (O_S_TCPNUL << 1),	/* '-sF' : TCP FIN Scan */
-	O_S_TCPXMA	= (O_S_TCPFIN << 1),	/* '-sX' : TCP XMAS Scan */
-	O_S_TCPCUS	= (O_S_TCPXMA << 1),	/* '--scanflasg' : Custom TCP options Scan */
-	O_S_SCTPIN	= (O_S_TCPCUS << 1),	/* '-sY' : SCTP INIT Scan */
-	O_S_SCTPCE	= (O_S_SCTPIN << 1),	/* '-sZ' : SCTP COOKIE-ECHO Scan */
-	O_S_IPPROT	= (O_S_SCTPCE << 1),	/* '-sO' : IP PROTOCOL Scan */
+	O_S_TCPSYN	= ((u64)O_SPEEDUP << 1),	/* '-sS' : TCP SYN Scan */
+	O_S_TCPCON	= ((u64)O_S_TCPSYN << 1),	/* '-sT' : TCP CONNECT Scan */
+	O_S_TCPACK	= ((u64)O_S_TCPCON << 1),	/* '-sA' : TCP ACK Scan */
+	O_S_TCPWIN	= ((u64)O_S_TCPACK << 1),	/* '-sW' : TCP WINDOW Scan */
+	O_S_TCPMAI	= ((u64)O_S_TCPWIN << 1),	/* '-sM' : TCP MAIMON Scan */
+	O_S_UDP		= ((u64)O_S_TCPMAI << 1),	/* '-sU' : UDP Scan */
+	O_S_TCPNUL	= ((u64)O_S_UDP << 1),		/* '-sN' : TCP NULL Scan */
+	O_S_TCPFIN	= ((u64)O_S_TCPNUL << 1),	/* '-sF' : TCP FIN Scan */
+	O_S_TCPXMA	= ((u64)O_S_TCPFIN << 1),	/* '-sX' : TCP XMAS Scan */
+	O_S_TCPCUS	= ((u64)O_S_TCPXMA << 1),	/* '--scanflags' : Custom TCP options Scan */
+	O_S_SCTPIN	= ((u64)O_S_TCPCUS << 1),	/* '-sY' : SCTP INIT Scan */
+	O_S_SCTPCE	= ((u64)O_S_SCTPIN << 1),	/* '-sZ' : SCTP COOKIE-ECHO Scan */
+	O_S_IPPROT	= ((u64)O_S_SCTPCE << 1),	/* '-sO' : IP PROTOCOL Scan */
 
-	O_VE_UP		= (O_S_IPPROT << 1),	/* '-sV' : Service and Version detection up */
-	O_VE_LIGHT	= (O_VE_UP << 1),		/* '--version-light' : Alias for '-sV' */
-	O_VE_ALL	= (O_VE_LIGHT << 1),	/* '--version-all' : Try all probes to find version */
+	O_VE_UP		= ((u64)O_S_IPPROT << 1),	/* '-sV' : Service and Version detection up */
+	O_VE_LIGHT	= ((u64)O_VE_UP << 1),		/* '--version-light' : Alias for '-sV' */
+	O_VE_ALL	= ((u64)O_VE_LIGHT << 1),	/* '--version-all' : Try all probes to find version */
 
-	O_OS_UP		= (O_VE_ALL << 1),		/* '-O' : OS detection up */
-	O_OS_LIM	= (O_OS_UP << 1),		/* '--osscan-limit' : OS detection if has almost 1 port open and closed */
-	O_OS_GSS	= (O_OS_LIM << 1),		/* '--osscan-guess' : Guess OS if not perfect match */
-	O_OS_MTR	= (O_OS_GSS << 1),		/* '--max-os-tries' : Max amount of tries whether there's not OS match */
+	O_OS_UP		= ((u64)O_VE_ALL << 1),		/* '-O' : OS detection up */
+	O_OS_LIM	= ((u64)O_OS_UP << 1),		/* '--osscan-limit' : OS detection if has almost 1 port open and closed */
+	O_OS_GSS	= ((u64)O_OS_LIM << 1),		/* '--osscan-guess' : Guess OS if not perfect match */
+	O_OS_MTR	= ((u64)O_OS_GSS << 1),		/* '--max-os-tries' : Max amount of tries whether there's not OS match */
 
-	O_EV_MTU	= (O_OS_MTR << 1),		/* '--mtu' set the MTU size */
-	O_EV_FRG	= (O_EV_MTU << 1),		/* '-f' : Fragments packets using '--mtu' */
-	O_EV_DEC	= (O_EV_FRG << 1),		/* '-D' : Cloak a scan with decoys */
-	O_EV_IP		= (O_EV_DEC << 1),		/* '-S' : Spoof source address */
-	O_EV_IF		= (O_EV_IP << 1),		/* '-e' : Select interface */
-	O_EV_SPRT	= (O_EV_IF << 1),		/* '-g' : Spoof source port number */
-	O_EV_HDAT	= (O_EV_SPRT << 1),		/* '--data-hex' : Append custom hex string to packets */
-	O_EV_SDAT	= (O_EV_HDAT << 1),		/* '--data-string' : Append custom string to packets */
-	O_EV_RDAT	= (O_EV_SDAT << 1),		/* '--data-lenght' : Append random data to packets */
-	O_EV_IPOP	= (O_EV_RDAT << 1),		/* '--ip-options' : Set ip options of outcoming packets */
-	O_EV_TTL	= (O_EV_IPOP << 1),		/* '--ttl' : Set the ttl of outgoing packets */
-	O_EV_RHST	= (O_EV_TTL << 1),		/* '--randomize-hosts' : Randomize target order */
-	O_EV_MAC	= (O_EV_RHST << 1),		/* '--spoof-mac' : Spoof MAC address */
-	O_EV_BSUM	= (O_EV_MAC << 1)		/* '--badsum' : Send packets with a bogus checksum */
+	O_EV_MTU	= ((u64)O_OS_MTR << 1),		/* '--mtu' set the MTU size */
+	O_EV_FRG	= ((u64)O_EV_MTU << 1),		/* '-f' : Fragments packets using '--mtu' */
+	O_EV_DEC	= ((u64)O_EV_FRG << 1),		/* '-D' : Cloak a scan with decoys */
+	O_EV_IP		= ((u64)O_EV_DEC << 1),		/* '-S' : Spoof source address */
+	O_EV_IF		= ((u64)O_EV_IP << 1),		/* '-e' : Select interface */
+	O_EV_SPRT	= ((u64)O_EV_IF << 1),		/* '-g' : Spoof source port number */
+	O_EV_HDAT	= ((u64)O_EV_SPRT << 1),	/* '--data-hex' : Append custom hex string to packets */
+	O_EV_SDAT	= ((u64)O_EV_HDAT << 1),	/* '--data-string' : Append custom string to packets */
+	O_EV_RDAT	= ((u64)O_EV_SDAT << 1),	/* '--data-lenght' : Append random data to packets */
+	O_EV_IPOP	= ((u64)O_EV_RDAT << 1),	/* '--ip-options' : Set ip options of outcoming packets */
+	O_EV_TTL	= ((u64)O_EV_IPOP << 1),	/* '--ttl' : Set the ttl of outgoing packets */
+	O_EV_RHST	= ((u64)O_EV_TTL << 1),		/* '--randomize-hosts' : Randomize target order */
+	O_EV_MAC	= ((u64)O_EV_RHST << 1),	/* '--spoof-mac' : Spoof MAC address */
+	O_EV_BSUM	= ((u64)O_EV_MAC << 1)		/* '--badsum' : Send packets with a bogus checksum */
 }				parse_opts_t;
+
+typedef enum portpref
+{
+	NONE,
+	TCP,
+	UDP,
+	SCTP
+}			portpref_t;
+
+typedef struct	ft_port
+{
+	portpref_t	preffix;
+	u16			value;
+}				port_t;
 
 typedef struct	ft_args
 {
-	u16*			ports;
+	port_t*			ports;
 	u16				currport;
 	u16				lastport;
 	u32*			ips;

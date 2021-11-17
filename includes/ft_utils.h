@@ -13,3 +13,7 @@
 # define ISALFA(x) (ISUPPER(x) || ISLOWER(x))
 # define ISALNUM(x) (ISALFA(x) || ISNUM(x))
 # define ISHEX(x) (ISNUM(x) || ((x) >= 'a' && (x) <= 'f') || ((x) >= 'A' && (x) <= 'F'))
+
+# define BITADD(x, mask) ((x) |= (mask))
+# define BITDEL(x, mask) ((x) &= ~(mask))
+# define BITHAS(x, mask) ((x) & (mask))
