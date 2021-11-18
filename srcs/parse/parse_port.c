@@ -3,6 +3,7 @@
 # include <ft_parse.h>
 # include <ft_nmap.h>
 # include <ft_utils.h>
+# include <ft_libc.h>
 
 # include <stdlib.h>
 # include <errno.h>
@@ -36,28 +37,43 @@ static inline u64 get_sep_index(char* range, u32 sep)
 	return sep_index;
 }
 
+static u32	has_repeated_port(port_t* ports)
+{
+	for (size_t i = 0 ; ports[i].value ; i++)
+	{
+		for (size_t y = i + 1 ; ports[y].value ; y++)
+		{
+			if (ports[i].value == ports[y].value)
+				return ports[i].value;
+		}
+	}
+	return 0;
+}
+
 /// @brief Parses preffix and increment value if the format is valid
 /// Otherwise, other function will throw error cause prefix is not an
 /// unique / ranged port format
 static portpref_t skip_preffix(char** valueptr)
 {
-	portpref_t preffix = NONE;
+	portpref_t preffix = PREF_NONE;
 
 	if ((*valueptr)[1] == ':')
 	{
 		switch (**valueptr)
 		{
 			case 'T':
-				preffix = TCP;
+				preffix = PREF_TCP;
 				break ;
 			case 'U':
-				preffix = UDP;
+				preffix = PREF_UDP;
 				break ;
 			case 'S':
-				preffix = SCTP;
+				preffix = PREF_SCTP;
 				break ;
+			default:
+				preffix = PREF_ERROR;
 		}
-		if (valueptr != NONE)
+		if (valueptr != PREF_NONE)
 			*valueptr += 2;
 	}
 
@@ -142,8 +158,8 @@ static u32	get_last_port_range(char* valueptr, u16 start, u64 max, bool* const i
 
 	if (is_last)
 	{
-		if (value > start + max)
-			value = start + max;
+		if (value >= start + max)
+			value = start + max - 1;
 		else
 			*is_last = true;
 	}
@@ -152,25 +168,25 @@ static u32	get_last_port_range(char* valueptr, u16 start, u64 max, bool* const i
 }
 
 /// @brief Return the value of the first port located at @a valueptr + 1 
-static u16	get_next_port(char* valueptr)
+static u16	get_next_port(char** valueptr)
 {
 	u16 next_port;
 
-	if (++valueptr == NULL)
+	if (*(++valueptr) == NULL)
 		next_port = 0;
-	else if (is_range_format(valueptr))
-		next_port = get_first_port_range(valueptr, 0);
+	else if (is_range_format(*valueptr))
+		next_port = get_first_port_range(*valueptr, 0);
 	else
-		next_port = get_port_unique(valueptr, 0);
+		next_port = get_port_unique(*valueptr, 0);
 
 	return next_port;
 }
 
 /// @brief Return a pointer to the string in string array @a values where port @a tofind is located
-static char* find_port(char** values, u16 tofind)
+static char** find_port(char** values, u16 tofind)
 {
 	if (tofind == 0)
-		return *values;
+		return values;
 
 	for ( ; *values ; values++)
 	{
@@ -178,10 +194,10 @@ static char* find_port(char** values, u16 tofind)
 		{
 			u16 first = get_first_port_range(*values, 0);
 			if (tofind >= first && tofind <= get_last_port_range(*values, first, 0, 0, 0))
-				return *values;
+				return values;
 		}
 		else if (get_port_unique(*values, 0) == tofind)
-			return *values;
+			return values;
 	}
 }
 
@@ -192,9 +208,11 @@ static err_t count_ports(u64* const port_nb, const char* s, u16 curr_port, bool*
 	u64 total = 0;
 	u64 total_until_end = 0;
 	bool curr_reached = false;
+	portpref_t preffix;
 
 	err_t	st = SUCCESS;
-	char**	values = split(s, ',');
+	char**	values = split((char*)s, ',');
+	char**	base = values;
 
 	if (values == NULL)
 	{
@@ -206,24 +224,29 @@ static err_t count_ports(u64* const port_nb, const char* s, u16 curr_port, bool*
 	{
 		if (is_range_format(*values))
 		{
-			u32 first = get_first_port_range(*values, 0);
+			u32 first = get_first_port_range(*values, &preffix);
 			if (first > 0XFFFF || first == 0)
 				goto error;
-			u32 last = get_last_port_range(*values, first, 0, 0, 0);
+			u32 last = get_last_port_range(*values, first, 0, 0, &preffix);
 			if (last > 0XFFFF || last == 0)
 				goto error;
+			if ((i32)(last - first) <= 0)
+				goto error;
 
-			total += last - first;
+			total += last - first + 1;
 
 			if (curr_port && curr_port >= first && curr_port <= last)
+			{
 				curr_reached = true;
-			if (curr_reached)
-				total_until_end += last - first;
+				total_until_end += last - curr_port;
+			}
+			else if (curr_reached)
+				total_until_end += last - first + 1;
 		}
 		else if (is_unique_format(*values))
 		{
-			u32 value = get_port_unique(*values, 0);
-			if (value > 0XFFFF || values == 0)
+			u32 value = get_port_unique(*values, &preffix);
+			if (value > 0XFFFF || value == 0)
 				goto error;
 
 			total++;
@@ -235,14 +258,22 @@ static err_t count_ports(u64* const port_nb, const char* s, u16 curr_port, bool*
 		}
 		else
 			goto error;
+
+		if (preffix == PREF_ERROR)
+		{
+			st = EARGUMENT;
+			goto error;
+		}
+
 	}
 
 	*is_last_iteration = (curr_port == 0 && total < MAX_PORTNB) || (curr_port && total_until_end < MAX_PORTNB);
-	free(values);
+	*port_nb = total;
+	free_split(base);
 	return st;
 
 error:
-	free(values);
+	free_split(base);
 	PRINT_ERROR(EMSG_INVARG, O_PORT_STR, s);
 	return EARGUMENT;
 }
@@ -253,8 +284,8 @@ static err_t copy_ports(parse_t* const parse, u64 bufflen, const char* s)
 {
 	err_t	st = SUCCESS;
 	u64		cplen = 0;
-	char*	valueptr;
-	char**	values = split(s, ',');
+	char**	valueptr;
+	char**	values = split((char*)s, ',');
 
 	if (values == NULL)
 	{
@@ -265,15 +296,18 @@ static err_t copy_ports(parse_t* const parse, u64 bufflen, const char* s)
 
 	valueptr = find_port(values, parse->args.currport);
 
+	if (parse->args.currport == 0)
+		parse->args.currport = get_first_port_range(*valueptr, 0);
+
 	u16 next_iteration_start;
 	u64 buffindex = 0;
-	while (valueptr && cplen < bufflen)
+	portpref_t preffix;
+	while (*valueptr && cplen < bufflen)
 	{
-		portpref_t preffix;
-		if (is_range_format(valueptr))
+		if (is_range_format(*valueptr))
 		{
-			bool is_last;
-			const u64 lastinrange = get_last_port_range(valueptr, parse->args.currport, bufflen - cplen, &is_last, &preffix);
+			bool is_last = false;
+			const u64 lastinrange = get_last_port_range(*valueptr, parse->args.currport, bufflen - cplen, &is_last, &preffix);
 
 			for (u64 value = parse->args.currport ; value <= lastinrange ; value++)
 			{
@@ -281,22 +315,28 @@ static err_t copy_ports(parse_t* const parse, u64 bufflen, const char* s)
 				parse->args.ports[buffindex++].preffix = preffix;
 			}
 
-			cplen += lastinrange - parse->args.currport;
-			next_iteration_start = is_last ? get_next_port(valueptr) : lastinrange + 1;
+			cplen += lastinrange - parse->args.currport + 1;
+
+			if (cplen == bufflen)
+				next_iteration_start = is_last ? get_next_port(valueptr) : lastinrange + 1;
 		}
 		else
 		{
-			parse->args.ports[buffindex].value = get_port_unique(valueptr, &preffix);
+			parse->args.ports[buffindex].value = get_port_unique(*valueptr, &preffix);
 			parse->args.ports[buffindex++].preffix = preffix;
 			cplen++;
-			next_iteration_start = get_next_port(valueptr);
+
+			if (cplen == bufflen)
+				next_iteration_start = get_next_port(valueptr);
 		}
 		valueptr++;
+		if (*valueptr && is_range_format(*valueptr))
+			parse->args.currport = get_first_port_range(*valueptr, 0);
 	}
-	parse->args.currport = next_iteration_start;
+	parse->args.currport = next_iteration_start;	
 
 error:
-	free(values);
+	free_split(values);
 	return st;
 }
 
@@ -311,19 +351,16 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 {
 	///NOTE: Call it once on parse, call it more after complete parse (if option enabled (just need a pointer to ports args to work))
 
-	err_t st;
+	err_t st = SUCCESS;
 	u64 port_nb = 0;
 	bool islast_iteration = false;
 
 	/* Check format, validate values, get lenght and iteration status */
-	if ((st = count_ports(&port_nb, s,parse->args.currport, &islast_iteration)) != SUCCESS)
+	if ((st = count_ports(&port_nb, s, parse->args.currport, &islast_iteration)) != SUCCESS)
 		goto error;
 
-	st = islast_iteration ? BREAK : SUCCESS;
-
-	///TODO: Max ports is 1024, this will be optional with an option
-	/* Enable iteration */
-	if (1 && port_nb > MAX_PORTNB)
+	/* Limit the number of ports, in all the cases a max of 1024 are copied per call */
+	if (BITHAS(parse->opts, O_FULLPORT) == false && port_nb > MAX_PORTNB)
 	{
 		PRINT_ERROR(EMSG_MAXPORTRANGE, MAX_PORTNB);
 		st = EMAXRANGE;
@@ -335,7 +372,7 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 	/* Allocate a maximum of 1024 ports per iteration */
 	free(parse->args.ports);
 
-	if ((parse->args.ports = malloc(sizeof(*parse->args.ports) * bufflen)) == NULL)
+	if ((parse->args.ports = malloc(sizeof(*parse->args.ports) * (bufflen + 1))) == NULL)
 	{
 		PRINT_ERROR(EMSG_SYSCALL, "malloc", errno);
 		st = ESYSCALL;
@@ -344,10 +381,21 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 
 	/* Copy ports and update iteration status for next iteration */
 	if ((st = copy_ports(parse, bufflen, s)) != SUCCESS)
+		goto error;
+
+	/* Check for repeated ports */
+	u32 repeated;
+	if ((repeated = has_repeated_port(parse->args.ports)) != 0)
 	{
-		free(parse->args.ports);
+		PRINT_ERROR(EMSG_REPEATED_PORT, repeated);
+		st = EARGUMENT;
 		goto error;
 	}
+
+	st = islast_iteration ? BREAK : SUCCESS;
+
+	/* NULL terminated array */
+	memset(parse->args.ports + bufflen, 0, sizeof(*parse->args.ports));
 
 error:
 	return st;

@@ -4,6 +4,7 @@
 # include <ft_types.h>
 
 # define O_HELP_STR "--help"
+# define O_FULLPORT_STR "--port-max=unlimited"
 # define O_PORT_STR "--ports"
 # define O_IP_STR "--ip"
 # define O_FILE_STR "--file"

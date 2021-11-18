@@ -17,7 +17,8 @@ typedef uint64_t	u64;
 typedef enum	parse_opts
 {
 	O_HELP		= ((u64)1UL << 0),			/* '--help' */
-	O_PORT		= ((u64)O_HELP << 1),		/* '--ports' */
+	O_FULLPORT	= ((u64)O_HELP << 1),		/* '--port-max=unlimited */
+	O_PORT		= ((u64)O_FULLPORT << 1),	/* '--ports' */
 	O_IP		= ((u64)O_PORT << 1),		/* '--ip' */
 	O_FILE		= ((u64)O_IP << 1),			/* '--file' */
 	O_SPEEDUP	= ((u64)O_FILE << 1),		/* '--speedup' */
@@ -63,10 +64,11 @@ typedef enum	parse_opts
 
 typedef enum portpref
 {
-	NONE,
-	TCP,
-	UDP,
-	SCTP
+	PREF_NONE,
+	PREF_TCP,
+	PREF_UDP,
+	PREF_SCTP,
+	PREF_ERROR
 }			portpref_t;
 
 typedef struct	ft_port
@@ -79,7 +81,7 @@ typedef struct	ft_args
 {
 	port_t*			ports;
 	u16				currport;
-	u16				lastport;
+	bool			no_port_iterations;
 	u32*			ips;
 	u32				currip;
 	u32				lastip;

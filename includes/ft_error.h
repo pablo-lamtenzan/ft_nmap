@@ -7,7 +7,7 @@
 # define __progname "ft_nmap"
 #endif
 
-# define DEBUG_PREFFIX "[DEBUG]"
+# define DEBUG_PREFFIX "[DEBUG] "
 
 # define PRINT_ERROR(format, args...) (dprintf(2, format, args))
 # define PRINT_INFO(format, args...) (dprintf(1, format, args))
@@ -30,3 +30,4 @@ typedef enum	ft_err
 # define EMSG_UNKNOWN_OPT EMSG_PREFFFIX "unkown option `%s\'" "\n"
 # define EMSG_MAXPORTRANGE EMSG_PREFFFIX "max port range suported is %d" "\n"
 # define EMSG_MAXTHREADSRANGE EMSG_PREFFFIX "max parallel scanings suported are %d" "\n"
+# define EMSG_REPEATED_PORT EMSG_PREFFFIX "repeated port not allowed (repeated port: %hu)" "\n"
