@@ -370,18 +370,27 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 	const u64 bufflen = islast_iteration ? port_nb % MAX_PORTNB : MIN(port_nb, MAX_PORTNB);
 
 	/* Allocate a maximum of 1024 ports per iteration */
-	free(parse->args.ports);
 
-	if ((parse->args.ports = malloc(sizeof(*parse->args.ports) * (bufflen + 1))) == NULL)
+	///TODO: DO NOT NEED TO REALLOCATE EACH TIME, JUST FIRST AND LAST
+
+	if (parse->args.ports == NULL)
 	{
-		PRINT_ERROR(EMSG_SYSCALL, "malloc", errno);
-		st = ESYSCALL;
-		goto error;
+		if ((parse->args.ports = malloc(sizeof(*parse->args.ports) * (bufflen + 1))) == NULL)
+		{
+			PRINT_ERROR(EMSG_SYSCALL, "malloc", errno);
+			st = ESYSCALL;
+			goto error;
+		}
 	}
+	else
+		memset(parse->args.ports, 0, MAX_PORTNB);
 
 	/* Copy ports and update iteration status for next iteration */
 	if ((st = copy_ports(parse, bufflen, s)) != SUCCESS)
 		goto error;
+
+	/* NULL terminated array */
+	memset(parse->args.ports + bufflen, 0, sizeof(*parse->args.ports));
 
 	/* Check for repeated ports */
 	u32 repeated;
@@ -394,8 +403,6 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 
 	st = islast_iteration ? BREAK : SUCCESS;
 
-	/* NULL terminated array */
-	memset(parse->args.ports + bufflen, 0, sizeof(*parse->args.ports));
 
 error:
 	return st;
