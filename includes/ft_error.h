@@ -31,3 +31,4 @@ typedef enum	ft_err
 # define EMSG_MAXPORTRANGE EMSG_PREFFFIX "max port range suported is %d" "\n"
 # define EMSG_MAXTHREADSRANGE EMSG_PREFFFIX "max parallel scanings suported are %d" "\n"
 # define EMSG_REPEATED_PORT EMSG_PREFFFIX "repeated port not allowed (repeated port: %hu)" "\n"
+# define EMSG_REPEATED_IP EMSG_PREFFFIX "repeated ip not allowed (repeared ip %s)" "\n"

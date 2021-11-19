@@ -7,7 +7,7 @@
 
 err_t parse_all_arguments(const char** av[], parse_t* const parse)
 {
-    static const i8* const arg_str[] = {
+    static const char* const arg_str[] = {
         O_HELP_STR,    O_FULLPORT_STR, O_PORT_STR,
         O_IP_STR,      O_FILE_STR,     O_SPEEDUP_STR, 
         O_SCAN_STR,    O_VE_UP_STR,    O_VE_LIGHT_STR,

@@ -85,7 +85,8 @@ typedef struct	ft_args
 	bool			no_port_iterations;
 	u32*			ips;
 	u32				currip;
-	u32				lastip;
+	u64				totalips;
+	bool			no_ip_iterations;
 	i8*				file;
 	u16				nb_threads;
 	u8				os_det_tries;

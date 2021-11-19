@@ -276,7 +276,7 @@ static char** find_port(char** values, u16 tofind)
 	{
 		if (is_range_format(*values))
 		{
-			u16 first = get_first_port_range(*values, 0);
+			const u16 first = get_first_port_range(*values, 0);
 			if (tofind >= first && tofind <= get_last_port_range(*values, first, 0, 0, 0))
 				return values;
 		}
@@ -287,7 +287,6 @@ static char** find_port(char** values, u16 tofind)
 
 static err_t is_last_iteration(u16 currport, const char* s, bool* const is_last)
 {
-	err_t st = SUCCESS;
 	u64 lenght = 0;
 	bool curr_reached = currport == 0;
 
@@ -304,8 +303,8 @@ static err_t is_last_iteration(u16 currport, const char* s, bool* const is_last)
 	{
 		if (is_range_format(*values))
 		{
-			u32 first = get_first_port_range(*values, 0);
-			u32 last = get_last_port_range(*values, first, 0, 0, 0);
+			const u32 first = get_first_port_range(*values, 0);
+			const u32 last = get_last_port_range(*values, first, 0, 0, 0);
 
 			if (currport && currport >= first && currport <= last)
 			{
@@ -317,7 +316,7 @@ static err_t is_last_iteration(u16 currport, const char* s, bool* const is_last)
 		}
 		else
 		{
-			u32 unique = get_port_unique(*values, 0);
+			const u32 unique = get_port_unique(*values, 0);
 
 			if (currport && currport == unique)
 				curr_reached = true;
@@ -331,12 +330,11 @@ static err_t is_last_iteration(u16 currport, const char* s, bool* const is_last)
 	return SUCCESS;
 }
 
-static err_t counts_ports(u64* const port_nb, const char* s)
+static err_t count_ports(u64* const port_nb, const char* s)
 {
-	u64 total = 0;
-	portpref_t preffix;
-
 	err_t	st = SUCCESS;
+	u64 	total = 0;
+	portpref_t preffix;
 	char**	values = split((char*)s, ',');
 	char**	base = values;
 
@@ -350,10 +348,10 @@ static err_t counts_ports(u64* const port_nb, const char* s)
 	{
 		if (check_range_format(*values))
 		{
-			u32 first = get_first_port_range(*values, &preffix);
+			const u32 first = get_first_port_range(*values, &preffix);
 			if (first > 0XFFFF || first == 0)
 				goto error;
-			u32 last = get_last_port_range(*values, first, 0, 0, &preffix);
+			const u32 last = get_last_port_range(*values, first, 0, 0, &preffix);
 			if (last > 0XFFFF || last == 0)
 				goto error;
 			if ((i32)(last - first) <= 0)
@@ -363,7 +361,7 @@ static err_t counts_ports(u64* const port_nb, const char* s)
 		}
 		else if (check_unique_format(*values))
 		{
-			u32 value = get_port_unique(*values, &preffix);
+			const u32 value = get_port_unique(*values, &preffix);
 			if (value > 0XFFFF || value == 0)
 				goto error;
 
@@ -407,8 +405,13 @@ static err_t copy_ports(parse_t* const parse, u64 bufflen, const char* s)
 	valueptr = find_port(values, parse->args.currport);
 
 	if (parse->args.currport == 0)
-		parse->args.currport = get_first_port_range(*valueptr, 0);
-
+	{
+		if (is_range_format(*valueptr))
+			parse->args.currport = get_first_port_range(*valueptr, 0);
+		else
+			parse->args.currport = get_port_unique(*valueptr, 0);
+	}
+		
 	u16 next_iteration_start;
 	u64 buffindex = 0;
 	portpref_t preffix;
@@ -505,7 +508,7 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 	err_t st = SUCCESS;
 	u64 port_nb = 0;
 
-	if ((st = counts_ports(&port_nb, s)) != SUCCESS)
+	if ((st = count_ports(&port_nb, s)) != SUCCESS)
 		goto error;
 
 	u32 repeated;
