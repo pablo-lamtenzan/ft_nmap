@@ -14,11 +14,15 @@ static inline void free_all(parse_t* parse)
     free_parse(parse);
 }
 
+// NOTE: Use pipes to comunicate main <-> threads, close connextion when thread end (no mutex seeem to be neaded)
+
 int main(int ac, const char* av[])
 {
     err_t st = SUCCESS;
 
     parse_t parse = {0};
+
+    const char* t = av[3];
 
     av++;
     if ((st = parse_all_arguments(&av, &parse)) != SUCCESS)

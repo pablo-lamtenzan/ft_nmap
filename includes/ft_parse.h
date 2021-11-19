@@ -51,4 +51,7 @@
 
 typedef err_t (*const parse_arg_t)(const char*, parse_t* const);
 
+err_t   parse_all_arguments(const char** av[], parse_t* const parse);
+void    free_parse(parse_t* const parse);
 err_t	parse_ports(const char* s, parse_t* const parse);
+err_t	parse_ports_iteration(const char* s, u64 port_nb, parse_t* const parse);

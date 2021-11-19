@@ -81,6 +81,7 @@ typedef struct	ft_args
 {
 	port_t*			ports;
 	u16				currport;
+	u64				totalports;
 	bool			no_port_iterations;
 	u32*			ips;
 	u32				currip;
