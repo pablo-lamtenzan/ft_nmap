@@ -21,7 +21,8 @@ char **split(char *string, const char delimiter)
     int length = 0, count = 0, i = 0, j = 0;
     while(*(string++))
     {
-        if (*string == delimiter) count++;
+        if (*string == delimiter)
+            count++;
         length++;
     }
 
@@ -34,7 +35,7 @@ char **split(char *string, const char delimiter)
     for(i = 0; i < (count + 1); i++)
     {
         j = 0;
-        while(string[j] != delimiter)
+        while(string[j] && string[j] != delimiter)
             j++;
         j++;
 
@@ -46,9 +47,13 @@ char **split(char *string, const char delimiter)
         }
 
         memcpy(*array, string, (j-1));
+
         (*array)[j - 1] = '\0';
         string += j;
+
         array++;
+
+
     }
 
     *array = '\0';

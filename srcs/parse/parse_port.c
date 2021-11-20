@@ -87,8 +87,7 @@ static u32	get_first_port_range(char* valueptr, portpref_t* const preffix)
 		*preffix = pref;
 
 	char buff[0X10] = {0};
-	u64 sep_index = get_sep_index(valueptr, '-');
-	memcpy(buff, valueptr, sep_index);
+	memcpy(buff, valueptr, get_sep_index(valueptr, '-'));
 	return atoi(buff);
 }
 
@@ -102,7 +101,7 @@ static u32	get_last_port_range(char* valueptr, u16 start, u64 max, bool* const i
 
 	char buff[0X10] = {0};
 
-	u64 sep_index = get_sep_index(valueptr, '-');
+	const u64 sep_index = get_sep_index(valueptr, '-');
 	memcpy(buff, valueptr + sep_index + 1, strlen(&valueptr[sep_index + 1]));
 
 	u32 value = atoi(buff);
@@ -323,9 +322,16 @@ static err_t is_last_iteration(u16 currport, const char* s, bool* const is_last)
 			if (curr_reached)
 				lenght++;
 		}
+
+		if (lenght < MAX_PORTNB)
+		{
+			*is_last = true;
+			goto end;
+		}
 	}
 
-	*is_last = lenght < MAX_PORTNB;
+	*is_last = false;
+end:
 	free_split(base);
 	return SUCCESS;
 }
@@ -511,7 +517,7 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 	if ((st = count_ports(&port_nb, s)) != SUCCESS)
 		goto error;
 
-	u32 repeated;
+	u16 repeated;
 	if ((st = check_repeated_port(s, &repeated)) != SUCCESS)
 	{
 		PRINT_ERROR(EMSG_REPEATED_PORT, repeated);

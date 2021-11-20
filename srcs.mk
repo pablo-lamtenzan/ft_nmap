@@ -13,8 +13,13 @@ $(addprefix includes/,\
 )
 SRCS	=\
 $(addprefix srcs/,\
+	$(addprefix analyse/,\
+	)\
 	$(addprefix debug/,\
+		dbg_print_ips.c\
 		dbg_print_ports.c\
+	)\
+	$(addprefix engine/,\
 	)\
 	$(addprefix ft_libc/,\
 		split.c\
@@ -23,6 +28,7 @@ $(addprefix srcs/,\
 	$(addprefix parse/,\
 		free_parse.c\
 		parse.c\
+		parse_ip.c\
 		parse_port.c\
 	)\
 )

@@ -5,6 +5,9 @@
 
 # include <string.h>
 
+///TODO: Seem some arguments follows and specific order in subject
+/// (port before ip, then all options)
+
 err_t parse_all_arguments(const char** av[], parse_t* const parse)
 {
     static const char* const arg_str[] = {
@@ -23,7 +26,8 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
     static const parse_arg_t arg_f[] = {
         NULL,
         NULL,
-        &parse_ports
+        &parse_ports,
+        &parse_ips
     };
 
 	err_t	st = SUCCESS;
@@ -34,7 +38,7 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
     {
         for (size_t arg_index = 0 ; arg_index < ARRAYSIZE(arg_str) ; arg_index++)
         {
-            if (strncmp((*av)[index], arg_str[arg_index], strlen(arg_str[arg_index])) == 0)
+            if (strncmp((*av)[index], arg_str[arg_index], strlen(arg_str[arg_index]) + 1) == 0)
             {
 				found = true;
 				BITADD(parse->opts, 1 << arg_index);
@@ -52,6 +56,11 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
                         if (arg_f[arg_index] == &parse_ports && st == BREAK)
                         {
                             parse->args.no_port_iterations = true;
+                            st = SUCCESS;
+                        }
+                        else if (arg_f[arg_index] == &parse_ips && st == BREAK)
+                        {
+                            parse->args.no_ip_iterations = true;
                             st = SUCCESS;
                         }
 						goto error;

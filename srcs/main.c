@@ -22,11 +22,25 @@ int main(int ac, const char* av[])
 
     parse_t parse = {0};
 
-    const char* t = av[3];
+    const char* t = av[2];
 
     av++;
     if ((st = parse_all_arguments(&av, &parse)) != SUCCESS)
         goto error;
+
+    dbg_print_ips(parse.args.ips);
+
+    parse_ips_iteration(t, parse.args.totalips, &parse);
+
+    dbg_print_ips(parse.args.ips);
+
+    parse_ips_iteration(t, parse.args.totalips, &parse);
+
+    dbg_print_ips(parse.args.ips);
+
+    parse_ips_iteration(t, parse.args.totalips, &parse);
+
+    dbg_print_ips(parse.args.ips);
 
 error:
     free_all(&parse);

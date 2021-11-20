@@ -17,3 +17,5 @@
 # define BITADD(x, mask) ((x) |= (mask))
 # define BITDEL(x, mask) ((x) &= ~(mask))
 # define BITHAS(x, mask) ((x) & (mask))
+
+# define ISVAL_INRANGE(x, min, max) ((min) <= (x) && (max) >= (x))
