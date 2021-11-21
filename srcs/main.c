@@ -30,17 +30,17 @@ int main(int ac, const char* av[])
 
     dbg_print_ips(parse.args.ips);
 
-    parse_ips_iteration(t, parse.args.totalips, &parse);
+    // parse_ips_iteration(t, parse.args.totalips, &parse);
 
-    dbg_print_ips(parse.args.ips);
+    // dbg_print_ips(parse.args.ips);
 
-    parse_ips_iteration(t, parse.args.totalips, &parse);
+    // parse_ips_iteration(t, parse.args.totalips, &parse);
 
-    dbg_print_ips(parse.args.ips);
+    // dbg_print_ips(parse.args.ips);
 
-    parse_ips_iteration(t, parse.args.totalips, &parse);
+    // parse_ips_iteration(t, parse.args.totalips, &parse);
 
-    dbg_print_ips(parse.args.ips);
+    // dbg_print_ips(parse.args.ips);
 
 error:
     free_all(&parse);

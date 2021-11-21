@@ -8,6 +8,7 @@
 # include <stdlib.h>
 # include <errno.h>
 # include <arpa/inet.h>
+# include <netdb.h>
 
 # include <string.h>
 
@@ -20,12 +21,17 @@ static inline u64 get_sep_index(char* s, u32 sep)
 	return sep_index;
 }
 
+static bool str_has(i32 tofind, char* str)
+{
+	while ((*str))
+		if (*(str++) == tofind)
+			return true;
+	return false;
+}
 
 static bool check_range_format(char* valueptr)
 {
 	u32 count = 0;
-
-	/// TODO: MUST BE TRUE FOR SUBNETS
 
 	if (ISNUM(*valueptr))
 	{
@@ -47,12 +53,16 @@ static bool check_range_format(char* valueptr)
 
 static bool is_range_format(char* valueptr)
 {
-	///TODO: MUST BE TRUE FOR SUBNETS
+	bool found = false;
 
 	for (u64 i = 0 ; valueptr[i] ; i++)
+	{
+		if (valueptr[i] != '-' && valueptr[i] != '.' && !ISNUM(valueptr[i]) && valueptr[i] != '/')
+			return false;
 		if (valueptr[i] == '-')
-			return true;
-	return false;
+			found = true;
+	}
+	return found;
 }
 
 static bool check_unique_format(char* valueptr)
@@ -65,9 +75,8 @@ static bool check_unique_format(char* valueptr)
 
 static bool check_dns_format(char* valueptr)
 {
-	///TODO: Try to resolve dns
-
-	return false;
+	struct hostent* h;
+	return (h = gethostbyname(valueptr)) != NULL && h->h_addrtype == AF_INET;
 }
 
 static u32 get_unique(char* unique)
@@ -92,13 +101,175 @@ static u32 get_last_in_range(char* range)
 
 static u32 get_ip_unique(char* valueptr)
 {
+	struct hostent* h = gethostbyname(valueptr);
+
+	if (h)
+	{
+		struct in_addr* addr = (struct in_addr*)*h->h_addr_list;
+
+		return addr->s_addr;
+	}
+
 	return inet_addr(valueptr);
+}
+
+static err_t hasnot_unique_in_range(char* range, char* unique, u32* const repeated)
+{
+	err_t st = SUCCESS;
+
+	char** rg_bytes = split(range, '.');
+
+	if (rg_bytes == NULL)
+	{
+		PRINT_ERROR(EMSG_SYSCALL, "malloc", errno);
+		return ESYSCALL;
+	}
+
+	u32 un = get_ip_unique(unique);
+
+	u8 un_bytes[4] = {
+		((un & 0X000000FF)) & 0XFF,
+		((un & 0X0000FF00) >> 8) & 0XFF,
+		((un & 0X00FF0000) >> 16) & 0XFF,
+		((un & 0XFF000000) >> 24) & 0XFF
+	};
+
+	u8 matches = 0;
+	for (u64 i = 0 ; i < ARRAYSIZE(un_bytes) ; i++)
+	{
+		if (str_has('-', rg_bytes[i]))
+		{
+			const u8 first = get_first_in_range(rg_bytes[i]);
+			const u8 last = get_last_in_range(rg_bytes[i]);
+
+			matches += (bool)ISVAL_INRANGE(un_bytes[i], first, last);
+		}
+		else
+			matches += (bool)(un_bytes[i] == get_unique(rg_bytes[i]));
+	}
+
+	*repeated = un;
+	free_split(rg_bytes);
+	return matches != ARRAYSIZE(un_bytes) ? SUCCESS : EARGUMENT;
+}
+
+static err_t hasnot_range_in_range(char* range1, char* range2, u32* const reapeted)
+{
+	err_t st = SUCCESS;
+
+	char**	r1_bytes = split(range1, '.');
+	char**	r2_bytes = split(range2, '.');
+
+	if (r1_bytes == NULL || r2_bytes == NULL)
+	{
+		if (r2_bytes == NULL)
+			free_split(r1_bytes);
+		PRINT_ERROR(EMSG_SYSCALL, "malloc", errno);
+		return ESYSCALL;
+	}
+
+	u8 matches = 0;
+	for (u64 i = 0 ; i < 4 ; i++)
+	{
+		if (str_has('-', r1_bytes[i]))
+		{
+			if (str_has('-', r2_bytes[i]))
+			{
+				const u8 r1first = get_first_in_range(r1_bytes[i]);
+				const u8 r1last = get_last_in_range(r1_bytes[i]);
+				const u8 r2first = get_first_in_range(r2_bytes[i]);
+				const u8 r2last = get_last_in_range(r2_bytes[i]);
+
+				matches += (bool)ISVAL_INRANGE(r1first, r2first, r2last)
+				|| (bool)ISVAL_INRANGE(r1last, r2first, r2last); 
+			}
+			else
+			{
+				const u8 first = get_first_in_range(r1_bytes[i]);
+				const u8 last = get_last_in_range(r1_bytes[i]);
+				const u8 un = get_ip_unique(r2_bytes[i]);
+
+				matches += (bool)ISVAL_INRANGE(un, first, last);
+			}
+		}
+		else
+		{
+			if (str_has('-', r2_bytes[i]))
+			{
+				const u8 first = get_first_in_range(r2_bytes[i]);
+				const u8 last = get_last_in_range(r2_bytes[i]);
+				const u8 un = get_ip_unique(r1_bytes[i]);
+
+				matches += (bool)ISVAL_INRANGE(un, first, last);
+			}
+			else
+				matches += (bool)(get_ip_unique(r1_bytes[i]) == get_ip_unique(r2_bytes[i]));
+		}
+	}
+
+	free_split(r1_bytes);
+	free_split(r2_bytes);
+	return matches != 4 ? SUCCESS : EARGUMENT;
+}
+
+static err_t check_repeated_ip(const char* s, u32* const repeated)
+{
+	err_t	st = SUCCESS;
+
+	char**	values = split((char*)s, ',');
+	char**	base = values;
+
+	if (values == NULL)
+	{
+		PRINT_ERROR(EMSG_SYSCALL, "malloc", errno);
+		return ESYSCALL;
+	}
+
+	for ( ; *(values + 1) ; values++)
+	{
+		for (char** it = values + 1 ; *it ; it++)
+		{
+			if (is_range_format(*it))
+			{
+				if (is_range_format(*values))
+				{
+					if (hasnot_range_in_range(*it, *values, repeated) != SUCCESS)
+						goto error;
+				}
+				else
+				{
+					if (hasnot_unique_in_range(*it, *values, repeated) != SUCCESS)
+						goto error;
+				}
+			}
+			else
+			{
+				if (is_range_format(*values))
+				{
+					if (hasnot_unique_in_range(*values, *it, repeated) != SUCCESS)
+						goto error;
+				}
+				else
+				{
+					u32 ip;
+					if ((ip = get_ip_unique(*values)) == get_ip_unique(*it))
+					{
+						*repeated = ip;
+						goto error;
+					}
+				}
+			}
+		}
+	}
+	free_split(base);
+	return st;
+error:
+	free_split(base);
+	return EARGUMENT;
 }
 
 static err_t get_first_ip_range(char* valueptr, u32* const val)
 {
-	///TODO: CAN BE A SUBNET
-
 	i16 firsts[4] = {-1, -1, -1, -1};
 	u8 res[4] = {0};
 	char** bytes = split(valueptr, '.');
@@ -110,11 +281,9 @@ static err_t get_first_ip_range(char* valueptr, u32* const val)
 
 	for (u64 i = 0 ; i < ARRAYSIZE(firsts) ; i++)
 	{
-		if (is_range_format(bytes[i]))
+		if (str_has('-', bytes[i]))
 			firsts[i] = (i16)get_first_in_range(bytes[i]);
 	}
-
-	///TODO: Modify firsts by the subnet if there are
 
 	for (u64 i = 0 ; i < ARRAYSIZE(res) ; i++)
 	{
@@ -147,7 +316,7 @@ static err_t get_next_ip(char** valueptr, u32* const next_ip)
 
 static err_t validate_ip_format(char* ip, u64* const lenght)
 {
-	err_t	st = SUCCESS;
+	err_t	st = EARGUMENT;
 
 	char**	bytes = split(ip, '.');
 	u32		total_length[4] = {0};
@@ -159,16 +328,12 @@ static err_t validate_ip_format(char* ip, u64* const lenght)
 	}
 
 	if (bytes[1] == NULL || bytes[2] == NULL || bytes[3] == NULL || *(bytes[3]) == 0 || bytes[4])
-	{
-		st = EARGUMENT;
-		goto error;
-	}
+		goto check_dns;
 
 	u16 has_zero = 0;
 
 	for (size_t i = 0 ; i < 4 ; i++)
 	{
-		///TODO: ADD SUBNET
 		if (check_range_format(bytes[i]))
 		{
 			const u32 first = get_first_in_range(bytes[i]);
@@ -207,21 +372,19 @@ static err_t validate_ip_format(char* ip, u64* const lenght)
 		}
 	}
 
-	if (0 /* SUBNET */)
-	{
-		// Change in total_lenght the ranges affected by the subnet
-	}
-
 	*lenght += total_length[0] * total_length[1] * total_length[2] * total_length[3];
 	free_split(bytes);
 	return SUCCESS;
 
 check_dns:
 	if (check_dns_format(ip) == true)
-		*lenght = 1;
+	{
+		*lenght += 1;
+		st = SUCCESS;
+	}
 error:
 	free_split(bytes);
-	return EARGUMENT;
+	return st;
 }
 
 static char** find_ip(char** values, u32 tofind)
@@ -238,11 +401,8 @@ static char** find_ip(char** values, u32 tofind)
 
 	for ( ; *values ; values++)
 	{
-		///TODO: And not a DNS
 		if (is_range_format(*values))
 		{
-			///TODO: Handle subnet
-
 			char** bytes = split(*values, '.');
 
 			if (bytes == NULL)
@@ -254,17 +414,15 @@ static char** find_ip(char** values, u32 tofind)
 			u8 matches = 0;
 			for (u64 i = 0 ; i < ARRAYSIZE(tofind_bytes) ; i++)
 			{
-				if (is_range_format(bytes[i]))
+				if (str_has('-', bytes[i]))
 				{
 					const u8 first = get_first_in_range(bytes[i]);
 					const u8 last = get_last_in_range(bytes[i]);
 
-					DEBUG("FIRST %hhu LAST %hhu X %hhu\n", first, last, tofind_bytes[i]);
 					matches += (bool)ISVAL_INRANGE(tofind_bytes[i], first, last);
 				}
 				else
 					matches += (bool)(tofind_bytes[i] == get_unique(bytes[i]));
-				DEBUG("MATCHES %hhu\n", matches);
 			}
 
 			free_split(bytes);
@@ -281,7 +439,6 @@ static char** find_ip(char** values, u32 tofind)
 
 	return NULL;
 }
-
 
 static u64 calc_max_possible(u8* const first, u8* const last)
 {
@@ -309,8 +466,6 @@ static err_t is_last_iteration(u32 curr, const char* s, bool* const is_last)
 		return ESYSCALL;
 	}
 
-	DEBUG("curr is %u\n", curr);
-
 	u8 firsts[4] = {
 		((curr & 0X000000FF)) & 0XFF,
 		((curr & 0X0000FF00) >> 8) & 0XFF,
@@ -328,12 +483,9 @@ static err_t is_last_iteration(u32 curr, const char* s, bool* const is_last)
 
 	for ( ; *valuesprt ; valuesprt++)
 	{
-		/// TODO: And not a DNS
 		if (is_range_format(*valuesprt))
 		{
-			///TODO: Handle subnet
-
-			char**	bytes = split(*values, '.');
+			char**	bytes = split(*valuesprt, '.');
 
 			if (bytes == NULL)
 			{
@@ -344,16 +496,13 @@ static err_t is_last_iteration(u32 curr, const char* s, bool* const is_last)
 
 			memset(lasts, 0, ARRAYSIZE(lasts));
 
-			///TODO: LAST VALUES DEPEND ON THE SUFIIX (SUBNET)
 			for (u64 i = 0 ; i < ARRAYSIZE(lasts) ; i++)
 			{
-				if (is_range_format(bytes[i]))
+				if (str_has('-', bytes[i]))
 					lasts[i] = get_last_in_range(bytes[i]);
 			}
 
 			lenght += calc_max_possible(firsts, lasts);
-
-			DEBUG("LENGHT %lu\n", lenght);
 
 			free_split(bytes);
 		}
@@ -366,7 +515,6 @@ static err_t is_last_iteration(u32 curr, const char* s, bool* const is_last)
 			goto end;
 		}
 	}
-	DEBUG("lenght is %lu\n",lenght);
 	*is_last = true;
 end:
 	free_split(base);
@@ -417,10 +565,9 @@ static err_t copy_range_ip(char* ip, const parse_t* parse, u64 max_allowed, u64*
 
 	u8	lasts[4] = {0};
 
-	///TODO: LAST VALUES DEPEND ON THE SUFIIX (SUBNET)
 	for (u64 i = 0 ; i < ARRAYSIZE(lasts) ; i++)
 	{
-		if (is_range_format(bytes[i]))
+		if (str_has('-', bytes[i]))
 			lasts[i] = get_last_in_range(bytes[i]);
 	}
 
@@ -458,6 +605,7 @@ static err_t copy_range_ip(char* ip, const parse_t* parse, u64 max_allowed, u64*
 						then i store it and set it to 0 again */
 					if (cplen == max_allowed + 1)
 					{
+	
 						*next = parse->args.ips[--(*buffindex)];
 						parse->args.ips[(*buffindex)--] = 0;
 						goto end;
@@ -527,28 +675,23 @@ static err_t copy_ips(parse_t* const parse,  u64 bufflen, const char* s)
 	u64 buffindex = 0;
 	while (*valueptr && cplen < bufflen)
 	{
-		///TODO: AND NOT A DNS
 		if (is_range_format(*valueptr))
 		{
 			u32 next = 0;
 			u64 prev_buffindex = buffindex;
-			if ((st = copy_range_ip(*valueptr, parse, bufflen, &buffindex, &next)) != SUCCESS)
+			if ((st = copy_range_ip(*valueptr, parse, bufflen - cplen, &buffindex, &next)) != SUCCESS)
 				goto error;
 
-			cplen += buffindex - prev_buffindex + 1;
+			cplen += buffindex - prev_buffindex;
 
-			DEBUG("CPLEN IS %lu\n", cplen);
-			if (cplen == bufflen)
+			if (cplen == bufflen - 1)
 			{
-				DEBUG("NEXT ----> %u\n", next);
 				if (next)
 					next_iteration_start = next;
 				else
 				{
 					if ((st = get_next_ip(valueptr, &next_iteration_start)) != SUCCESS)
 						goto error;
-
-					DEBUG("next it %u\n", next_iteration_start);
 				}
 			}
 		}
@@ -572,6 +715,7 @@ static err_t copy_ips(parse_t* const parse,  u64 bufflen, const char* s)
 	}
 	parse->args.currip = next_iteration_start;
 
+
 error:
 	free_split(values);
 	return st;
@@ -585,9 +729,6 @@ err_t	parse_ips_iteration(const char* s, u64 ip_nb, parse_t* const parse)
 	if ((st = is_last_iteration(parse->args.currport, s, &is_last_ip)) != SUCCESS)
 		goto error;
 
-	DEBUG("*** NEW IT (curr is: %u (%s))\n", parse->args.currip, inet_ntoa((struct in_addr){parse->args.currip}));
-
-	DEBUG("is last : %d\n", is_last_ip);
 
 	const u64 bufflen = is_last_ip ? ip_nb % IP_ITERATION_NB : MIN(ip_nb, IP_ITERATION_NB);
 
@@ -603,29 +744,16 @@ err_t	parse_ips_iteration(const char* s, u64 ip_nb, parse_t* const parse)
 	else
 		memset(parse->args.ips, 0, IP_ITERATION_NB);
 
-	DEBUG("BUFFLEN --> %lu\n", bufflen);
-
 	if ((st = copy_ips(parse, bufflen, s)) != SUCCESS)
 		goto error;
-
-	DEBUG("%s\n", "HERE -->");
 
 	memset(parse->args.ips + bufflen, 0, sizeof(*parse->args.ips));
 
 	st =  is_last_ip ? BREAK : SUCCESS;
 
-	DEBUG("CURR IP IS %u\n", parse->args.currip);
-
 error:
-	DEBUG("RET %d\n", st);
 	return st;
 }
-
-///TODO: TRANSITION RANGE/UNIQUE TO RANGE IN MULTIPLE IPS RANGES (FOR MULTIPLE ITERATIONS)
-
-///TODO: Subnet
-///TODO: DNS
-///TODO: Repated ips
 
 err_t	parse_ips(const char* s, parse_t* const parse)
 {
@@ -635,15 +763,13 @@ err_t	parse_ips(const char* s, parse_t* const parse)
 	if ((st = count_ips(&ip_nb, s)) != SUCCESS)
 		goto error;
 
-	// char* repeated;
-	// if ((st = check_repeated_ip(s, repeated)) != SUCCESS)
-	// {
-	// 	PRINT_ERROR(EMSG_REPEATED_IP, repeated);
-	// 	st = EARGUMENT;
-	// 	goto error;
-	// }
-
-	DEBUG("TOTAL IPS: %lu\n", ip_nb);
+	u32 repeated;
+	if ((st = check_repeated_ip(s, &repeated)) != SUCCESS)
+	{
+		PRINT_ERROR(EMSG_REPEATED_IP, repeated ? inet_ntoa((struct in_addr){repeated}) : "into range collision");
+		st = EARGUMENT;
+		goto error;
+	}
 
 	parse->args.totalips = ip_nb;
 
