@@ -49,11 +49,27 @@
 # define O_EV_MAC_STR "--spoof-mac"
 # define O_EV_BSUM "--badsum"
 
-typedef err_t (*const parse_arg_t)(const char*, parse_t* const);
+typedef err_t (*const parse_arg_t)(const char**, parse_t* const);
 
 err_t   parse_all_arguments(const char** av[], parse_t* const parse);
 void    free_parse(parse_t* const parse);
-err_t	parse_ports(const char* s, parse_t* const parse);
+err_t	parse_ports(const char** s, parse_t* const parse);
 err_t	parse_ports_iteration(const char* s, u64 port_nb, parse_t* const parse);
-err_t	parse_ips(const char* s, parse_t* const parse);
+err_t	parse_ips(const char** s, parse_t* const parse);
 err_t	parse_ips_iteration(const char* s, u64 ip_nb, parse_t* const parse);
+err_t   parse_data_hex(const char** s, parse_t* const parse);
+err_t   parse_data_lenght(const char** s, parse_t* const parse);
+err_t   parse_data_string(const char** s, parse_t* const parse);
+err_t   parse_decoy(const char** s, parse_t* const parse);
+err_t   parse_file(const char** s, parse_t* const parse);
+err_t   parse_if(const char** s, parse_t* const parse);
+err_t   parse_ip_opts(const char** s, parse_t* const parse);
+err_t   parse_mtu(const char** s, parse_t* const parse);
+err_t   parse_os_detection_tries(const char** s, parse_t* const parse);
+err_t   parse_scan(const char** s, parse_t* const parse);
+err_t   parse_scanflags(const char** s, parse_t* const parse);
+err_t   parse_speedup(const char** s, parse_t* const parse);
+err_t   parse_spoofed_src_ip(const char** s, parse_t* const parse);
+err_t   parse_spoofed_src_mac(const char** s, parse_t* const parse);
+err_t   parse_spoofed_src_port(const char** s, parse_t* const parse);
+err_t   parse_ttl(const char** s, parse_t* const parse);

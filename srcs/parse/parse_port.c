@@ -509,16 +509,16 @@ error:
 	return st;
 }
 
-err_t	parse_ports(const char* s, parse_t* const parse)
+err_t	parse_ports(const char** s, parse_t* const parse)
 {
 	err_t st = SUCCESS;
 	u64 port_nb = 0;
 
-	if ((st = count_ports(&port_nb, s)) != SUCCESS)
+	if ((st = count_ports(&port_nb, *s)) != SUCCESS)
 		goto error;
 
 	u16 repeated;
-	if ((st = check_repeated_port(s, &repeated)) != SUCCESS)
+	if ((st = check_repeated_port(*s, &repeated)) != SUCCESS)
 	{
 		PRINT_ERROR(EMSG_REPEATED_PORT, repeated);
 		st = EARGUMENT;
@@ -527,7 +527,7 @@ err_t	parse_ports(const char* s, parse_t* const parse)
 
 	parse->args.totalports = port_nb;
 
-	st = parse_ports_iteration(s, port_nb, parse);
+	st = parse_ports_iteration(*s, port_nb, parse);
 
 error:
 	return st;

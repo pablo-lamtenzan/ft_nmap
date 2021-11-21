@@ -27,7 +27,31 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
         NULL,
         NULL,
         &parse_ports,
-        &parse_ips
+        &parse_ips,
+        &parse_file,
+        &parse_speedup,
+        &parse_scan,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        &parse_os_detection_tries,
+        &parse_mtu,
+        NULL,
+        &parse_decoy,
+        &parse_spoofed_src_ip,
+        &parse_if,
+        &parse_spoofed_src_port,
+        &parse_data_hex,
+        &parse_data_string,
+        &parse_data_lenght,
+        &parse_ip_opts,
+        &parse_ttl,
+        NULL,
+        &parse_spoofed_src_mac,
+        NULL
     };
 
 	err_t	st = SUCCESS;
@@ -51,14 +75,14 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
 						st = EARGUMENT;
 						goto error;
 					}
-					else if ((st = arg_f[arg_index]((*av)[++index], parse)) != SUCCESS)
+					else if ((st = arg_f[arg_index](&(*av)[++index], parse)) != SUCCESS)
                     {
                         if (arg_f[arg_index] == &parse_ports && st == BREAK)
                         {
                             parse->args.no_port_iterations = true;
                             st = SUCCESS;
                         }
-                        else if (arg_f[arg_index] == &parse_ips && st == BREAK)
+                        else if ((arg_f[arg_index] == &parse_ips && st == BREAK) || (arg_f[arg_index] == &parse_file && st == BREAK))
                         {
                             parse->args.no_ip_iterations = true;
                             st = SUCCESS;

@@ -662,7 +662,7 @@ static err_t copy_ips(parse_t* const parse,  u64 bufflen, const char* s)
 
 	if (parse->args.currip == 0)
 	{
-		if (is_range_format(*valueptr)) // AND NOT DNS
+		if (is_range_format(*valueptr))
 		{
 			if ((st = get_first_ip_range(*valueptr, &parse->args.currip)) != SUCCESS)
 				goto error;
@@ -707,7 +707,7 @@ static err_t copy_ips(parse_t* const parse,  u64 bufflen, const char* s)
 			}
 		}
 		valueptr++;
-		if (*valueptr && is_range_format(*valueptr)) /// AND NOT DNS
+		if (*valueptr && is_range_format(*valueptr))
 		{
 			if ((st = get_first_ip_range(*valueptr, &parse->args.currip)) != SUCCESS)
 				goto error;
@@ -755,16 +755,16 @@ error:
 	return st;
 }
 
-err_t	parse_ips(const char* s, parse_t* const parse)
+err_t	parse_ips(const char** s, parse_t* const parse)
 {
 	err_t st = SUCCESS;
 	u64 ip_nb = 0;
 
-	if ((st = count_ips(&ip_nb, s)) != SUCCESS)
+	if ((st = count_ips(&ip_nb, *s)) != SUCCESS)
 		goto error;
 
 	u32 repeated;
-	if ((st = check_repeated_ip(s, &repeated)) != SUCCESS)
+	if ((st = check_repeated_ip(*s, &repeated)) != SUCCESS)
 	{
 		PRINT_ERROR(EMSG_REPEATED_IP, repeated ? inet_ntoa((struct in_addr){repeated}) : "into range collision");
 		st = EARGUMENT;
@@ -773,7 +773,7 @@ err_t	parse_ips(const char* s, parse_t* const parse)
 
 	parse->args.totalips = ip_nb;
 
-	st = parse_ips_iteration(s, ip_nb, parse);
+	st = parse_ips_iteration(*s, ip_nb, parse);
 
 error:
 	return st;
