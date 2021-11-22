@@ -6,9 +6,12 @@
 
 void dbg_print_ips(u32* ips)
 {
-    DEBUG("Print ips (ip addr: %p)\n", ips);
-    u64 i = 0;
-    for ( ; ips[i] != 0 ; i++)
-        DEBUG("-> [%s]\n", inet_ntoa((struct in_addr){ips[i]}));
-    DEBUG("Total ips are [%lu]\n", i);
+    if (ips)
+    {
+        DEBUG("Print ips (ip addr: %p)\n", ips);
+        u64 i = 0;
+        for ( ; ips[i] != 0 ; i++)
+            DEBUG("-> [%s]\n", inet_ntoa((struct in_addr){ips[i]}));
+        DEBUG("Total ips are [%lu]\n", i);
+    }
 }
