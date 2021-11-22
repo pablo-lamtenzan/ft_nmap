@@ -8,6 +8,8 @@
 ///TODO: Seem some arguments follows and specific order in subject
 /// (port before ip, then all options)
 
+///TODO: Restrict 255.255.255.255 (broadcast has no sense while receiving)
+
 err_t parse_all_arguments(const char** av[], parse_t* const parse)
 {
     static const char* const arg_str[] = {
