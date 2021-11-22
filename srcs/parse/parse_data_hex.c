@@ -15,7 +15,7 @@ err_t	parse_data_hex(const char** s, parse_t* const parse)
 
 	if (**s == '\\')
 	{
-		for (u64 i = 0 ; (*s)[i] ; i++)
+		for (register u64 i = 0 ; (*s)[i] ; i++)
 		{
 			if ((*s)[i] == '\\' && (*s)[i + 1] && (*s)[i + 1] == 'x')
 				i+= 2;
@@ -24,7 +24,7 @@ err_t	parse_data_hex(const char** s, parse_t* const parse)
 			
 			if (*s[i])
 			{
-				u64 y = 0;
+				register u64 y = 0;
 				while ((*s)[i] && (*s)[i] != '\\')
 				{
 					if (ISHEX((*s)[i]))
@@ -55,7 +55,7 @@ err_t	parse_data_hex(const char** s, parse_t* const parse)
 
 		if (**s == 0)
 			goto error;
-		for (u64 i = 0 ; (*s)[i] ; i++)
+		for (register u64 i = 0 ; (*s)[i] ; i++)
 		{
 			if (ISHEX((*s)[i]) == false)
 				goto error;

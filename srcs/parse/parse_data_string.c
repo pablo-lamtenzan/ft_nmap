@@ -6,9 +6,6 @@
 
 err_t   parse_data_string(const char** s, parse_t* const parse)
 {
-    (void)s;
-    (void)parse;
+    parse->args.data = *s;
     return SUCCESS;
-
-    // Format any valid string is copied
 }

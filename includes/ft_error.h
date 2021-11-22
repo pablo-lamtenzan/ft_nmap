@@ -33,3 +33,4 @@ typedef enum	ft_err
 # define EMSG_REPEATED_PORT EMSG_PREFFFIX "repeated port not allowed (repeated port: %hu)" "\n"
 # define EMSG_REPEATED_IP EMSG_PREFFFIX "repeated ip not allowed (repeared ip %s)" "\n"
 # define EMSG_ZEROED_IP EMSG_PREFFFIX "option `%s\': ip `0.0.0.0\' is not a valid target" "\n"
+# define EMSG_INV_VALUE EMSG_PREFFFIX "option `%s\': invalid value: `%s\' (valid range: %d >= <value> >= %d)" "\n"
