@@ -4,11 +4,28 @@
 # include <ft_utils.h>
 # include <ft_libc.h>
 
-err_t   parse_mtu(const char** s, parse_t* const parse)
-{
-    (void)s;
-    (void)parse;
-    return SUCCESS;
+# include <stdlib.h>
 
-    /// Must be > 0 and multiple of 8
+err_t	parse_mtu(const char** s, parse_t* const parse)
+{
+	for (register u64 i = 0 ; (*s)[i] ; i++)
+	{
+		if (ISNUM((*s)[i]) == false)
+		{
+			PRINT_ERROR(EMSG_INVARG, O_EV_MTU_STR, *s);
+			return EARGUMENT;
+		}
+	}
+
+	register const i64 value = atol(*s);
+
+	if (value <= 0 || value % 8)
+	{
+		PRINT_ERROR(EMSG_INV_MTU, *s);
+		return EARGUMENT;
+	}
+
+	parse->args.mtu = value;
+
+	return SUCCESS;
 }
