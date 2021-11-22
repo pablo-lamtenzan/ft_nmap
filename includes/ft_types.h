@@ -87,18 +87,18 @@ typedef struct	ft_args
 	u32				currip;
 	u64				totalips;
 	bool			no_ip_iterations;
-	i8*				file;
+	const i8*		file;
 	u16				nb_threads;
 	u8				os_det_tries;
 	u64				mtu;
 	void*			decoys; // TODO: define type (a kind of array)
-	u32				scr_ipaddr;
-	u8*				interface;
+	u32				scr_ip;
+	const u8*		interface;
 	u16				scr_port;
-	u8*				data;
-	u8*				ip_opts;
+	const u8*		data;
+	const u8*		ip_opts;
 	u8				ttl;
-	u8*				src_mac;
+	const u8		src_mac[6];
 }				args_t;
 
 typedef struct	ft_parse

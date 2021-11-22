@@ -4,16 +4,68 @@
 # include <ft_utils.h>
 # include <ft_libc.h>
 
-err_t   parse_data_hex(const char** s, parse_t* const parse)
+# include <string.h>
+# include <stdlib.h>
+
+err_t	parse_data_hex(const char** s, parse_t* const parse)
 {
-    (void)s;
-    (void)parse;
+	err_t st = SUCCESS;
+
+	const char* prev = *s;
+
+	if (**s == '\\')
+	{
+		for (u64 i = 0 ; (*s)[i] ; i++)
+		{
+			if ((*s)[i] == '\\' && (*s)[i + 1] && (*s)[i + 1] == 'x')
+				i+= 2;
+			else
+				goto error;
+			
+			if (*s[i])
+			{
+				u64 y = 0;
+				while ((*s)[i] && (*s)[i] != '\\')
+				{
+					if (ISHEX((*s)[i]))
+					{
+						y++;
+						i++;
+					}
+					else
+						goto error;
+				}
+				if (y == 0 || y > 2)
+					goto error;
+				i--;
+			}
+			else
+				goto error;
+		}
+	}
+	else
+	{
+		if (**s == '0')
+		{
+			if (*(*s + 1) != 'X' || (*(s + 1) && *(*s + 1) != 'x'))
+				*s += 2;
+			else
+				goto error;
+		}
+
+		if (**s == 0)
+			goto error;
+		for (u64 i = 0 ; (*s)[i] ; i++)
+		{
+			if (ISHEX((*s)[i]) == false)
+				goto error;
+		}
+	}
+
+	parse->args.data = *s;
     return SUCCESS;
 
-    // Suported formats:
-    // - 0x42ab24ab24ab
-    // - 42ab24ab24ab
-    // - \x42\xab\x42\xab
-
-    // Upper or lower cases
+error:
+    PRINT_ERROR(EMSG_INVARG, O_EV_HDAT_STR, prev);
+    return EARGUMENT;
 }

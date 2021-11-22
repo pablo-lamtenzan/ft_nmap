@@ -10,6 +10,8 @@ err_t   parse_file(const char** s, parse_t* const parse)
     (void)parse;
     return SUCCESS;
 
+    //  maybe redefine the option name for error handing (i kind of template in cpp behaviour)
+
     // 1) Open file, read, cp removing '\n'
     // 2) Call parse_ips
     // 3) Store the file pointer
