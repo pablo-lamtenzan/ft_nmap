@@ -34,3 +34,6 @@ typedef enum	ft_err
 # define EMSG_REPEATED_IP EMSG_PREFFFIX "repeated ip not allowed (repeared ip %s)" "\n"
 # define EMSG_ZEROED_IP EMSG_PREFFFIX "option `%s\': ip `0.0.0.0\' is not a valid target" "\n"
 # define EMSG_INV_VALUE EMSG_PREFFFIX "option `%s\': invalid value: `%s\' (valid range: %d >= <value> >= %d)" "\n"
+# define EMSG_UNKOWN_FILENAME EMSG_PREFFFIX "option `%s\': inkown filename: `%s\'" "\n"
+# define EMSG_INV_MTU EMSG_PREFFFIX "option --mtu: invalid value: `%s\' (must be > 0 and a multiple of 8)" "\n"
+# define EMSG_NOEFFECT_SPEEDUP __progname ": warning: option `%s\': 0 has no effect" "\n"
