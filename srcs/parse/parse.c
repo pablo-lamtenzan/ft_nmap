@@ -12,19 +12,6 @@
 
 err_t parse_all_arguments(const char** av[], parse_t* const parse)
 {
-    static const char* const arg_str[] = {
-        O_HELP_STR,    O_FULLPORT_STR, O_PORT_STR,
-        O_IP_STR,      O_FILE_STR,     O_SPEEDUP_STR, 
-        O_SCAN_STR,    O_VE_UP_STR,    O_VE_LIGHT_STR,
-        O_VE_ALL_STR,  O_OS_UP_STR,    O_OS_LIM_STR,
-        O_OS_GSS_STR,  O_OS_MTR_STR,   O_EV_MTU_STR,
-        O_EV_FRG_STR,  O_EV_DEC_STR,   O_EV_IP_STR,
-        O_EV_IF_STR,   O_EV_SPRT_STR,  O_EV_HDAT_STR,
-        O_EV_SDAT_STR, O_EV_RDAT_STR,  O_EV_IPOP_STR,
-        O_EV_TTL_STR,  O_EV_RHST_STR,  O_EV_MAC_STR,
-        O_EV_BSUM
-    };
-
     static const parse_arg_t arg_f[] = {
         NULL,
         NULL,
