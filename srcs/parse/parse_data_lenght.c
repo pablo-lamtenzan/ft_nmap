@@ -9,13 +9,13 @@
 
 err_t   parse_data_lenght(const char** s, parse_t* const parse)
 {
-    for (register u64 i = 0 ; (*s)[i] ; i++)
+    for (register u64 i = **s == '-' ; (*s)[i] ; i++)
     {
         if (ISNUM((*s)[i]) == false)
             goto error;
     }
 
-    const u32 lenght = atoi(*s);
+    const i32 lenght = atoi(*s);
 
     if (lenght < 0 || lenght > 0XFFFF)
     {
