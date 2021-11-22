@@ -16,6 +16,7 @@ $(addprefix srcs/,\
 	$(addprefix analyse/,\
 	)\
 	$(addprefix debug/,\
+		dbg_parse_opts.c\
 		dbg_print_ips.c\
 		dbg_print_ports.c\
 	)\
