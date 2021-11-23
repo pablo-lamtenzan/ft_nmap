@@ -331,6 +331,7 @@ static err_t validate_ip_format(char* ip, u64* const lenght)
 		goto check_dns;
 
 	u16 has_zero = 0;
+	u16 has_max = 0;
 
 	for (size_t i = 0 ; i < 4 ; i++)
 	{
@@ -347,6 +348,9 @@ static err_t validate_ip_format(char* ip, u64* const lenght)
 			if (first == 0 || last == 0)
 				has_zero++;
 
+			if (first == 0XFF || last == 0XFF)
+				has_max++;
+
 			if ((i32)(last - first) <= 0)
 				goto error;
 
@@ -357,8 +361,11 @@ static err_t validate_ip_format(char* ip, u64* const lenght)
 			const u16 value = get_unique(bytes[i]);
 			if (value > 0XFF)
 				goto error;
+
 			if (value == 0)
 				has_zero++;
+			else if (value == 0XFF)
+				has_max++;
 
 			total_length[i] = 1;
 		}
@@ -368,6 +375,11 @@ static err_t validate_ip_format(char* ip, u64* const lenght)
 		if (has_zero == 4)
 		{
 			PRINT_ERROR(EMSG_ZEROED_IP, O_IP_STR);
+			goto error;
+		}
+		else if (has_max == 4)
+		{
+			PRINT_ERROR(EMSG_BROADCAST_IP, O_IP_STR);
 			goto error;
 		}
 	}
