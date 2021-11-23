@@ -77,6 +77,16 @@ typedef struct	ft_port
 	u16			value;
 }				port_t;
 
+typedef enum	tcpflags
+{
+	URG	= (1 << 0),
+	ACK = (URG << 1),
+	PSH = (ACK << 1),
+	RST = (PSH << 1),
+	SYN = (RST << 1),
+	FIN = (SYN << 1)
+}				tcpflags_t;
+
 typedef struct	ft_args
 {
 	port_t*			ports;
@@ -89,6 +99,7 @@ typedef struct	ft_args
 	bool			no_ip_iterations;
 	const i8*		file;
 	u16				nb_threads;
+	u8				scanflags;
 	u8				os_det_tries;
 	u64				mtu;
 	void*			decoys; // TODO: define type (a kind of array)
@@ -98,7 +109,7 @@ typedef struct	ft_args
 	const u8*		data;
 	const u8*		ip_opts;
 	u8				ttl;
-	const u8		src_mac[6];
+	u8		src_mac[6];
 }				args_t;
 
 typedef struct	ft_parse

@@ -57,7 +57,11 @@ err_t   parse_scan(const char** s, parse_t* const parse)
 				BITADD(parse->opts, 1 << (i + 6));
 				s++;
 				if (s && i == 9)
-					parse_scanflags(s, parse);
+				{
+					if ((st = parse_scanflags(s, parse)) != SUCCESS)
+						return st;
+					s++;
+				}
 				break ;
 			}
 		}
