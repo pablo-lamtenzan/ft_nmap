@@ -11,6 +11,12 @@ err_t	parse_data_hex(const char** s, parse_t* const parse)
 {
 	err_t st = SUCCESS;
 
+	if (BITHAS(parse->opts, O_EV_RDAT))
+	{
+        free((i8*)parse->args.data);
+		BITDEL(parse->opts, O_EV_RDAT);
+	}
+
 	const char* prev = *s;
 
 	if (**s == '\\')

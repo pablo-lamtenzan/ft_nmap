@@ -5,12 +5,53 @@
 
 # include <string.h>
 
-///TODO: Seem some arguments follows and specific order in subject
-/// (port before ip, then all options)
+///TODO: Parse ip header options `parse_ip_opts.c`
 
-///TODO: Restrict 255.255.255.255 (broadcast has no sense while receiving)
+static inline err_t handle_invalid_option_combination(parse_t* const parse)
+{
+    err_t st = SUCCESS;
 
-///TODO: Check for invalid options combination (read man while doing it)
+    if (BITHAS(parse->opts, O_IP) && BITHAS(parse->opts, O_FILE))
+    {
+        PRINT_ERROR(EMGS_IMCOMPATIBLE_OPTS, O_IP_STR, O_FILE_STR);
+        st = EARGUMENT;
+    }
+
+    if (BITHAS(parse->opts, O_EV_HDAT | O_EV_SDAT | O_EV_RDAT))
+    {
+        if (BITHAS(parse->opts, O_EV_HDAT) && BITHAS(parse->opts, O_EV_SDAT | O_EV_RDAT))
+        {
+            PRINT_ERROR(EMGS_IMCOMPATIBLE_OPTS, O_EV_HDAT_STR, O_EV_SDAT_STR " | " O_EV_RDAT_STR);
+            st = EARGUMENT;
+        }
+        else if (BITHAS(parse->opts, O_EV_SDAT) && BITHAS(parse->opts, O_EV_HDAT | O_EV_RDAT))
+        {
+            PRINT_ERROR(EMGS_IMCOMPATIBLE_OPTS, O_EV_SDAT_STR , O_EV_HDAT_STR " | " O_EV_RDAT_STR);
+            st = EARGUMENT;
+        }
+        else if (BITHAS(parse->opts, O_EV_RDAT) && BITHAS(parse->opts, O_EV_HDAT | O_EV_SDAT))
+        {
+            PRINT_ERROR(EMGS_IMCOMPATIBLE_OPTS, O_EV_RDAT_STR , O_EV_HDAT_STR " | " O_EV_SDAT_STR);
+            st = EARGUMENT;
+        }
+    }
+
+    if (BITHAS(parse->opts, O_EV_DEC))
+    {
+        if (BITHAS(parse->opts, O_VE_UP | O_VE_LIGHT | O_VE_ALL))
+        {
+            PRINT_ERROR(EMGS_IMCOMPATIBLE_OPTS, O_EV_DEC_STR, O_VE_UP_STR " | " O_VE_LIGHT_STR " | " O_VE_ALL_STR);
+            st = EARGUMENT;
+        }
+        if (BITHAS(parse->opts, O_S_TCPCON))
+        {
+            PRINT_ERROR(EMGS_IMCOMPATIBLE_OPTS, O_EV_DEC_STR, O_SCAN_STR " " O_S_TCPCON_STR);
+            st = EARGUMENT;
+        }
+    }
+
+    return st;
+}
 
 err_t parse_all_arguments(const char** av[], parse_t* const parse)
 {
@@ -56,7 +97,21 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
             if (strncmp((*av)[index], arg_str[arg_index], strlen(arg_str[arg_index]) + 1) == 0)
             {
 				found = true;
-				BITADD(parse->opts, 1 << arg_index);
+
+                if (arg_f[arg_index] != &parse_scan)
+                {
+                    /* Skip all scan wrapped into --scan */
+                    const u64 mask = arg_index > 6 ? arg_index + 12 : arg_index;
+            
+                    if (BITHAS(parse->opts, 1UL << mask))
+                    {
+                        PRINT_ERROR(EMGS_DUPLICATE_OPT, arg_str[arg_index]);
+                        st = EARGUMENT;
+                        goto error;
+                    }
+
+                    BITADD(parse->opts, 1UL << mask);
+                }
 
 				if (arg_f[arg_index])
 				{
@@ -73,12 +128,14 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
                             parse->args.no_port_iterations = true;
                             st = SUCCESS;
                         }
-                        else if ((arg_f[arg_index] == &parse_ips && st == BREAK) || (arg_f[arg_index] == &parse_file && st == BREAK))
+                        else if ((arg_f[arg_index] == &parse_ips && st == BREAK)
+                        || (arg_f[arg_index] == &parse_file && st == BREAK))
                         {
                             parse->args.no_ip_iterations = true;
                             st = SUCCESS;
                         }
-						goto error;
+                        else
+                            goto error;
                     }
 				}
             }
@@ -93,6 +150,7 @@ err_t parse_all_arguments(const char** av[], parse_t* const parse)
     }
 
 	*av += index;
+    st = handle_invalid_option_combination(parse);
 error:
 	return st;
 }

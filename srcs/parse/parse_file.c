@@ -15,9 +15,9 @@ err_t	parse_file(const char** s, parse_t* const parse)
 	FILE* fp = fopen(*s, "r");
 	if (fp == NULL)
 	{
-		if (errno == EINVAL)
+		if (errno == EINVAL || errno == ENOENT)
 		{
-			PRINT_ERROR(EMSG_UNKOWN_FILENAME, *s);
+			PRINT_ERROR(EMSG_UNKOWN_FILENAME, O_FILE_STR, *s);
 			return EARGUMENT;
 		}
 		else

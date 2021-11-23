@@ -1,6 +1,7 @@
 
 # include <ft_types.h>
 # include <ft_utils.h>
+# include <ft_error.h>
 
 # include <stdlib.h>
 

@@ -13,4 +13,6 @@ err_t   parse_ip_opts(const char** s, parse_t* const parse)
     // S|R [route]|L [route]|T|U ... 
     // R, T, or U to request record-route, record-timestamp, or both options together
     // Loose or strict source routing may be specified with an L or S followed by a space and then a space-separated list of IP addresses.
+
+    ///TODO: This is not a critical think to parse i can do it at any moment
 }
