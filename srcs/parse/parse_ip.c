@@ -784,6 +784,7 @@ err_t	parse_ips(const char** s, parse_t* const parse)
 	}
 
 	parse->args.totalips = ip_nb;
+	parse->args.av_ip = *s;
 
 	st = parse_ips_iteration(*s, ip_nb, parse);
 

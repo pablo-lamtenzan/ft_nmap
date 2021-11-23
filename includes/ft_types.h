@@ -93,10 +93,12 @@ typedef struct	ft_args
 	u16				currport;
 	u64				totalports;
 	bool			no_port_iterations;
+	const char*		av_ports;
 	u32*			ips;
 	u32				currip;
 	u64				totalips;
 	bool			no_ip_iterations;
+	const char*		av_ip;
 	const i8*		file;
 	u16				nb_threads;
 	u8				scanflags;
@@ -109,7 +111,7 @@ typedef struct	ft_args
 	const u8*		data;
 	const u8*		ip_opts;
 	u8				ttl;
-	u8		src_mac[6];
+	u8				src_mac[6];
 }				args_t;
 
 typedef struct	ft_parse

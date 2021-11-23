@@ -526,6 +526,7 @@ err_t	parse_ports(const char** s, parse_t* const parse)
 	}
 
 	parse->args.totalports = port_nb;
+	parse->args.av_ports = *s;
 
 	st = parse_ports_iteration(*s, port_nb, parse);
 

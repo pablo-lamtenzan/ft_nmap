@@ -29,7 +29,7 @@ int main(int ac, const char* av[])
     if ((st = parse_all_arguments(&av, &parse)) != SUCCESS)
         goto error;
 
-    dbg_parse_opts(&parse.args);
+    //dbg_parse_opts(&parse.args);
 
 error:
     free_all(&parse);
