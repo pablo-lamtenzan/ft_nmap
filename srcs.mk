@@ -23,6 +23,7 @@ $(addprefix srcs/,\
 	$(addprefix engine/,\
 	)\
 	$(addprefix ft_libc/,\
+		ft_strtol.c\
 		split.c\
 	)\
 	main.c\
