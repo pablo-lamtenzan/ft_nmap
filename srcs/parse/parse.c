@@ -10,6 +10,8 @@
 
 ///TODO: Restrict 255.255.255.255 (broadcast has no sense while receiving)
 
+///TODO: Check for invalid options combination (read man while doing it)
+
 err_t parse_all_arguments(const char** av[], parse_t* const parse)
 {
     static const parse_arg_t arg_f[] = {

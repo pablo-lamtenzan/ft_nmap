@@ -37,3 +37,4 @@ typedef enum	ft_err
 # define EMSG_UNKOWN_FILENAME EMSG_PREFFFIX "option `%s\': inkown filename: `%s\'" "\n"
 # define EMSG_INV_MTU EMSG_PREFFFIX "option --mtu: invalid value: `%s\' (must be > 0 and a multiple of 8)" "\n"
 # define EMSG_NOEFFECT_SPEEDUP __progname ": warning: option `%s\': 0 has no effect" "\n"
+# define EMSG_DECOY_NEEDDECOYS EMSG_PREFFFIX "option `%s\': need at least 1 decoy ip address" "\n"

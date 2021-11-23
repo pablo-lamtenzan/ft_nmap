@@ -102,7 +102,7 @@ typedef struct	ft_args
 	u8				scanflags;
 	u8				os_det_tries;
 	u64				mtu;
-	void*			decoys; // TODO: define type (a kind of array)
+	const u8*		decoys;
 	u32				scr_ip;
 	const u8*		interface;
 	u16				scr_port;
