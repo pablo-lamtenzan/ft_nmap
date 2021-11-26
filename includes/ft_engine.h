@@ -16,6 +16,8 @@ typedef struct	routine_data
 	const u8*		decoys;
 }				routine_data_t;
 
+err_t getsockfromif(struct sockaddr* const res, const char* ifname);
+
 routine_data_t*	gen_routine_data(const packets_t* const packets,
 				const struct sockaddr* const host, const parse_t* const parse, portpref_t preffix);
 void			free_routine_data(routine_data_t* data);
